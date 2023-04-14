@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour {
+public class PlayerController : NetworkBehaviour {
     private bool ForwardCheck;
     private bool LeftCheck;
     private bool RightCheck;
@@ -37,6 +38,29 @@ public class PlayerController : MonoBehaviour {
         guiController = GetComponent<GUIController>();
     }
 
+    [ServerRpc]
+    public void UpdateLineRendererServerRpc(bool enabled, Vector3[] ropePositions) {
+        lineRenderer.enabled = enabled;
+        if (enabled) {
+            lineRenderer.positionCount = ropePositions.Length + 1;
+            for (int i = ropePositions.Length; i > 0; i--) {
+                lineRenderer.SetPosition(i, ropePositions[^i] - transform.position);
+            }
+            lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
+    [ClientRpc]
+    public void UpdateLineRendererClientRpc(bool enabled, Vector3[] ropePositions) {
+        lineRenderer.enabled = enabled;
+        if (enabled) {
+            lineRenderer.positionCount = ropePositions.Length + 1;
+            for (int i = ropePositions.Length; i > 0; i--) {
+                lineRenderer.SetPosition(i, ropePositions[^i] - transform.position);
+            }
+            lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
+
     // Update is called once per frame
     void Update() {
         Vector3 forwardValue = transform.forward;
@@ -48,6 +72,18 @@ public class PlayerController : MonoBehaviour {
         if (LeftCheck) { direction += Quaternion.Euler(0, -90, 0) * forwardValue; }
         if (RightCheck) { direction += Quaternion.Euler(0, 90, 0) * forwardValue; }
         if (BackwardCheck) { direction -= forwardValue; }
+
+        if (IsOwner) {
+            Vector3[] ropePositions = new Vector3[rope.Count];
+            for (int i = rope.Count; i > 0; i--) {
+                    ropePositions[^i] = rope[^i].transform.position;
+            }
+            if (IsServer) {
+                UpdateLineRendererClientRpc(lineRenderer.enabled, ropePositions);
+            } else {
+                UpdateLineRendererServerRpc(lineRenderer.enabled, ropePositions);
+            }
+        }
     }
 
     private void FixedUpdate() {
@@ -92,7 +128,6 @@ public class PlayerController : MonoBehaviour {
                 }
                 lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
 
-
                 if (GrappleSetting == 2) {
                     //rope collision checking
                     Physics.Raycast(new Ray(transform.position, rope[^1].transform.position - transform.position), out var hit);
@@ -124,6 +159,7 @@ public class PlayerController : MonoBehaviour {
                 }
             }
 
+            
         }
     }
     
@@ -164,6 +200,7 @@ public class PlayerController : MonoBehaviour {
         anchor.transform.position = anchorInfo.point;
         anchor.transform.rotation = Quaternion.LookRotation(anchorInfo.point - transform.position);
         anchor.transform.localScale = new Vector3(10, 10, 10);
+
 
         switch (GrappleSetting) {
             case 1:
