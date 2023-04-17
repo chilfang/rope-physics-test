@@ -299,7 +299,7 @@ public class PlayerController : NetworkBehaviour {
     private void AttachAvatarToRope() {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
-        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1, 0))).magnitude };
+        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1.5f, 0))).magnitude };
 
     }
 
@@ -307,12 +307,6 @@ public class PlayerController : NetworkBehaviour {
         lineRenderer.enabled = false;
 
         Destroy(rope[0].transform.parent.gameObject);
-
-        /*
-        foreach (GameObject ropePiece in rope) {
-            Destroy(ropePiece);
-        }
-        */
 
         rope.Clear();
 

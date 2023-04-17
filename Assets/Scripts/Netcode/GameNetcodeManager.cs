@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using Unity.Netcode.Transports.UNET;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 
 public class GameNetcodeManager : NetworkBehaviour {
@@ -8,15 +9,15 @@ public class GameNetcodeManager : NetworkBehaviour {
     [SerializeField]
     private GameObject playerClientPrefab;
 
-    static string Ip = "";
-    static string Port = "";
+    string Ip = "127.0.0.1";
+    string Port = "7777";
     void OnGUI() {
         if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer) {
             GUILayout.BeginArea(new Rect(Screen.width - 310, 10, 300, 300));
             GUILayout.Label("IP");
-            GUILayout.TextField(Ip);
+            Ip = GUILayout.TextField(Ip);
             GUILayout.Label("Port");
-            GUILayout.TextField(Port);
+            Port = GUILayout.TextField(Port);
 
             GUILayout.EndArea();
         }
@@ -30,12 +31,14 @@ public class GameNetcodeManager : NetworkBehaviour {
         GUILayout.EndArea();
     }
 
-    static void StartButtons() {
+    void StartButtons() {
         if (GUILayout.Button("Host")) NetworkManager.Singleton.StartHost();
         if (GUILayout.Button("Client")) NetworkManager.Singleton.StartClient();
         if (GUILayout.Button("Server")) NetworkManager.Singleton.StartServer();
-        NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = Ip;
-        NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectPort = System.Convert.ToInt32(Port);
+        
+        NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address = Ip;
+        NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Port = System.Convert.ToUInt16(Port);
+        
     }
 
     static void StatusLabels() {
