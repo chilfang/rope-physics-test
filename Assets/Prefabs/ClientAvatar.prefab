@@ -267,6 +267,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerController: {fileID: 4567002226484361595}
+  RopeGlobalPositons: []
+  lineRenderer: {fileID: 4567002225791126496}
 --- !u!114 &4567002225950430853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -515,7 +517,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GrappleSetting: 1
   avatar: {fileID: 4567002225950430862}
-  lineRenderer: {fileID: 4567002225791126496}
   force: 0.4
   airForce: 0.05
   sprintSpeedAddition: 0.2

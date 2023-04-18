@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UNET;
 using Unity.Netcode.Transports.UTP;
@@ -8,6 +9,8 @@ public class GameNetcodeManager : NetworkBehaviour {
     private GameObject playerServerPrefab;
     [SerializeField]
     private GameObject playerClientPrefab;
+
+    public Dictionary<ulong, GameObject> avatars = new Dictionary<ulong, GameObject>();
 
     string Ip = "127.0.0.1";
     string Port = "7777";
@@ -50,7 +53,7 @@ public class GameNetcodeManager : NetworkBehaviour {
         GUILayout.Label("Mode: " + mode);
     }
 
-    
+    /*
     static void SubmitNewPosition() {
         if (GUILayout.Button(NetworkManager.Singleton.IsServer ? "Move" : "Request Position Change")) {
             if (NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient) {
@@ -67,7 +70,7 @@ public class GameNetcodeManager : NetworkBehaviour {
             }
         }
     }
-    
+    */
 
     [ServerRpc(RequireOwnership = false)] //server owns this object but client can request a spawn
     public void SpawnPlayerServerRpc(ServerRpcParams rpcParams = default) {
