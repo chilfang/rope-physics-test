@@ -11,26 +11,37 @@ public class AvatarScript : NetworkBehaviour {
 
     private new Rigidbody rigidbody;
 
-    public List<Vector3> ropeGlobalPositons;
+    public List<Vector3> ropeGlobalPositions;
     [SerializeField]
     public LineRenderer lineRenderer;
 
     // Start is called before the first frame update
     void Start() {
         rigidbody = GetComponent<Rigidbody>();
-        ropeGlobalPositons = new List<Vector3>();
+        ropeGlobalPositions = new List<Vector3>();
     }
 
     public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
         GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>().avatars.Add(OwnerClientId, gameObject);
+        Debug.Log("spawn: " + OwnerClientId);
+
+        base.OnNetworkSpawn();
+    }
+
+    public override void OnDestroy() {
+        if (OwnerClientId == 0) { Debug.Log("despawn: 0\nGame Closing"); return; }
+        GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>().avatars.Remove(OwnerClientId);
+        Debug.Log("despawn: " + OwnerClientId);
+        
+
+        base.OnDestroy();
     }
 
     private void Update() {
         if (lineRenderer.enabled) {
-            lineRenderer.positionCount = ropeGlobalPositons.Count + 1;
-            for (int i = ropeGlobalPositons.Count; i > 0; i--) {
-                lineRenderer.SetPosition(i, ropeGlobalPositons[^i] - transform.position);
+            lineRenderer.positionCount = ropeGlobalPositions.Count + 1;
+            for (int i = ropeGlobalPositions.Count; i > 0; i--) {
+                lineRenderer.SetPosition(i, ropeGlobalPositions[^i] - transform.position);
             }
             lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
         }

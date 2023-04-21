@@ -72,6 +72,7 @@ public class GameNetcodeManager : NetworkBehaviour {
     }
     */
 
+    //spawn the player
     [ServerRpc(RequireOwnership = false)] //server owns this object but client can request a spawn
     public void SpawnPlayerServerRpc(ServerRpcParams rpcParams = default) {
         GameObject newPlayer = Instantiate(rpcParams.Receive.SenderClientId == OwnerClientId ? playerServerPrefab : playerClientPrefab);

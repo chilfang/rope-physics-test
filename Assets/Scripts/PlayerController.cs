@@ -39,47 +39,68 @@ public class PlayerController : NetworkBehaviour {
     void Start() {
         guiController = GetComponent<GUIController>();
         lineRenderer = avatar.GetComponent<AvatarScript>().lineRenderer;
-        ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositons;
         gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+        ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositions;
     }
-    
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void UpdateRopeServerRpc(bool enabled, Vector3[] ropePositions, ServerRpcParams serverParams = default) {
-        if (enabled) {
-            var list = new List<Vector3>();
-            list.AddRange(ropePositions);
+        //error checking
+        try {
+            if (gameNetcodeManager == null) {
+                Debug.Log("Game Netcode Manager is Null");
+                gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+                Debug.Log("Fixing...");
+            }
 
-            gameNetcodeManager.avatars[serverParams.Receive.SenderClientId].GetComponent<AvatarScript>().ropeGlobalPositons = list;
+            var avatar = gameNetcodeManager.avatars[serverParams.Receive.SenderClientId].GetComponent<AvatarScript>();
+            avatar.lineRenderer.enabled = enabled;
+
+            if (enabled) {
+                avatar.ropeGlobalPositions.Clear();
+                avatar.ropeGlobalPositions.AddRange(ropePositions);
+            }
+        } catch (System.Exception e) {
+            Debug.Log(e);
         }
     }
     [ClientRpc]
-    public void UpdateRopesClientRpc(bool enabled, ulong[] keys, Vector3[][] ropePositionsGroup) {
-        if (enabled) {
-            Debug.Log("start");
-            Debug.Log(keys.Length);
-            Debug.Log(ropePositionsGroup.Length);
-            for (int i = 0; i < keys.Length; i++) {
-                if (keys[i] == OwnerClientId) { continue; }
-                Debug.Log(OwnerClientId);
-                Debug.Log(keys[i]);
-                Debug.Log(ropePositionsGroup[i]);
-                AvatarScript avatar = gameNetcodeManager.avatars[keys[i]].GetComponent<AvatarScript>();
-
-                avatar.ropeGlobalPositons.Clear();
-                avatar.ropeGlobalPositons.AddRange(ropePositionsGroup[i]);
-                avatar.lineRenderer.enabled = enabled;
-                Debug.Log("end" + i);
+    public void UpdateRopesClientRpc(bool[] enabledGroup, ulong[] keys, Vector3[] ropePositionsGroup, int[] indexSeperator) {
+        //error checking
+        try {
+            if (IsServer) { return; }
+            if (gameNetcodeManager == null) {
+                Debug.Log("Game Netcode Manager is Null");
+                gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+                Debug.Log("Fixing...");
             }
-            Debug.Log("true end");
+            for (int i = 0; i < keys.Length; i++) {
+                if (keys[i] == NetworkManager.LocalClientId) { continue; }
+                AvatarScript avatar = gameNetcodeManager.avatars[keys[i]].GetComponent<AvatarScript>();
+                bool enabled = enabledGroup[i];
+
+                avatar.lineRenderer.enabled = enabled;
+
+                if (enabled) {
+                    avatar.ropeGlobalPositions.Clear();
+                    avatar.ropeGlobalPositions.AddRange(ropePositionsGroup[indexSeperator[i]..indexSeperator[i + 1]]);
+                }
+            }
+        } catch (System.Exception e) {
+            Debug.Log(e);
         }
     }
 
-    // Update is called once per frame
     void Update() {
-        Vector3 forwardValue = transform.forward;
+        //error checking 
+        if (gameNetcodeManager == null) {
+            Debug.Log("Game Netcode Manager is Null");
+            gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+            Debug.Log("Fixing...");
+        }
 
-        //if (MovementInputCheck = ForwardCheck || LeftCheck || RightCheck || BackwardCheck) {
+        //movement direction
+        Vector3 forwardValue = transform.forward;
         direction = Vector3.zero;
 
         if (ForwardCheck) { direction += forwardValue; }
@@ -87,6 +108,7 @@ public class PlayerController : NetworkBehaviour {
         if (RightCheck) { direction += Quaternion.Euler(0, 90, 0) * forwardValue; }
         if (BackwardCheck) { direction -= forwardValue; }
 
+        //rope mechanics
         if (lineRenderer.enabled) {
             if (GrappleSetting == 2) {
                 //rope collision checking
@@ -113,23 +135,28 @@ public class PlayerController : NetworkBehaviour {
         if (IsOwner) {
             if (IsServer) {
                 Dictionary<ulong, GameObject> avatars = gameNetcodeManager.avatars;
-                List<Vector3[]> ropePositionsGroup = new List<Vector3[]>();
+                List<Vector3> ropePositionsGroup = new List<Vector3>();
                 List<ulong> keys = new List<ulong>();
+                List<int> indexSeperator = new List<int> {0};
+                List<bool> enabledGroup = new List<bool>();
 
+                AvatarScript avatar;
                 foreach (var key in avatars.Keys) {
+                    avatar = avatars[key].GetComponent<AvatarScript>();
+
                     keys.Add(key);
-                    ropePositionsGroup.Add(avatars[key].GetComponent<AvatarScript>().ropeGlobalPositons.ToArray());
-                    Debug.Log(avatars[key].GetComponent<AvatarScript>().ropeGlobalPositons.Count);
+                    ropePositionsGroup.AddRange(avatar.ropeGlobalPositions.ToArray());
+                    indexSeperator.Add(ropePositionsGroup.Count);
+                    enabledGroup.Add(avatar.lineRenderer.enabled);
                 }
-                Debug.Log(ropePositionsGroup.Count);
-                Debug.Log(ropePositionsGroup.ToArray().Length);
-                UpdateRopesClientRpc(lineRenderer.enabled, keys.ToArray(), ropePositionsGroup.ToArray());
+
+                UpdateRopesClientRpc(enabledGroup.ToArray(), keys.ToArray(), ropePositionsGroup.ToArray(), indexSeperator.ToArray());
 
             } else {
-                UpdateRopeServerRpc(lineRenderer.enabled, avatar.GetComponent<AvatarScript>().ropeGlobalPositons.ToArray());
+                UpdateRopeServerRpc(lineRenderer.enabled, avatar.GetComponent<AvatarScript>().ropeGlobalPositions.ToArray());
             }
         }
-
+    
         
     }
 
@@ -168,14 +195,18 @@ public class PlayerController : NetworkBehaviour {
             }
 
             if (lineRenderer.enabled) {
-                /*
-                //rope visuals
-                lineRenderer.positionCount = rope.Count + 1;
-                for (int i = rope.Count; i > 0; i--) {
-                    lineRenderer.SetPosition(i, rope[^i].transform.position - transform.position);
+                //visuals
+                switch (GrappleSetting) {
+                    case 1:
+                        ropeGlobalPositions[0] = rope[0].transform.position;
+                        break;
+                    case 2:
+                        for (int i = 0; i < rope.Count; i++) {
+                            ropeGlobalPositions[i] = rope[i].transform.position;
+                        }
+
+                        break;
                 }
-                lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
-                */
 
                 //length adjustment
                 ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
@@ -200,7 +231,7 @@ public class PlayerController : NetworkBehaviour {
         //create anchor
         var anchor = CreateAnchor();
         rope.Add(anchor.transform.Find("AnchorBall").gameObject);
-        avatar.GetComponent<AvatarScript>().ropeGlobalPositons.Add(anchor.transform.position);
+        ropeGlobalPositions.Add(rope[^1].transform.position);
 
         //attach avatar to rope
         ConfigurableJoint avatarJoint = transform.parent.gameObject.AddComponent<ConfigurableJoint>();
@@ -226,26 +257,15 @@ public class PlayerController : NetworkBehaviour {
         anchor.transform.localScale = new Vector3(10, 10, 10);
 
 
-        switch (GrappleSetting) {
-            case 1:
-                //make anchor joint
-                ConfigurableJoint anchorJoint = anchor.AddComponent<ConfigurableJoint>();
-                anchorJoint.xMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.yMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.zMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.angularXMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.angularYMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.angularZMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.connectedBody = anchorInfo.rigidbody;
-                break;
-            case 2:
-                //make anchor rigidbody
-                Rigidbody anchorRigidbody = anchor.AddComponent<Rigidbody>();
-                anchorRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                anchorRigidbody.isKinematic = true;
-                break;
-        }
-        
+        ConfigurableJoint anchorJoint = anchor.AddComponent<ConfigurableJoint>();
+        anchorJoint.xMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.yMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.zMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularXMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularYMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularZMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.connectedBody = anchorInfo.rigidbody;
+
 
 
         //make anchor ball
@@ -301,21 +321,31 @@ public class PlayerController : NetworkBehaviour {
         anchorNode.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/White");
 
         //positioning
+        anchorNode.transform.localScale = new Vector3(.2f, .2f, .2f);
         anchorNode.transform.parent = rope[^1].transform;
         anchorNode.transform.position = hit.point;
-        anchorNode.transform.localScale = new Vector3(2, 2, 2);
 
+        /*
         //rigidbody
         Rigidbody rigidBody = anchorNode.AddComponent<Rigidbody>();
         rigidBody.constraints = RigidbodyConstraints.FreezePosition;
         rigidBody.isKinematic = true;
+        */
+        ConfigurableJoint joint = anchorNode.AddComponent<ConfigurableJoint>();
+        joint.connectedBody = hit.rigidbody;
+        joint.xMotion = ConfigurableJointMotion.Locked;
+        joint.yMotion = ConfigurableJointMotion.Locked;
+        joint.zMotion = ConfigurableJointMotion.Locked;
+        joint.angularXMotion = ConfigurableJointMotion.Locked;
+        joint.angularYMotion = ConfigurableJointMotion.Locked;
+        joint.angularZMotion = ConfigurableJointMotion.Locked;
 
         //other
         anchorNode.layer = LayerMask.NameToLayer("Rope");
         anchorNode.AddComponent<SphereCollider>();
 
         rope.Add(anchorNode);
-        avatar.GetComponent<AvatarScript>().ropeGlobalPositons.Add(anchorNode.transform.position);
+        ropeGlobalPositions.Add(anchorNode.transform.position);
 
         AttachAvatarToRope();
 
@@ -325,18 +355,16 @@ public class PlayerController : NetworkBehaviour {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
         avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1.5f, 0))).magnitude };
-
     }
 
     private void ClearRope() {
         lineRenderer.enabled = false;
 
-
         Destroy(rope[0].transform.parent.gameObject);
         Destroy(transform.parent.gameObject.GetComponent<ConfigurableJoint>());
 
         rope.Clear();
-        avatar.GetComponent<AvatarScript>().ropeGlobalPositons.Clear();
+        avatar.GetComponent<AvatarScript>().ropeGlobalPositions.Clear();
 
     }
 
@@ -377,6 +405,7 @@ public class PlayerController : NetworkBehaviour {
 
     public void RMB(InputAction.CallbackContext context) {
         if (context.started) {
+            //if (lineRenderer.enabled) { ClearRope(); }
             Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;
             if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.gameObject != transform.parent.gameObject) {
                 if (Physics.Raycast(new Ray(transform.position, anchorInfo.point - transform.position), out anchorInfo)) {
