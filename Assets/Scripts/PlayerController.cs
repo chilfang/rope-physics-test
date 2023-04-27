@@ -45,17 +45,19 @@ public class PlayerController : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void UpdateRopeServerRpc(bool enabled, Vector3[] ropePositions, ServerRpcParams serverParams = default) {
-        //error checking
         try {
-            if (gameNetcodeManager == null) {
+            //error checking
+            if (gameNetcodeManager == null) { //game manager reference resets for unknown reason sometimes
                 Debug.Log("Game Netcode Manager is Null");
                 gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
                 Debug.Log("Fixing...");
             }
 
+            //update visuals on host client
             var avatar = gameNetcodeManager.avatars[serverParams.Receive.SenderClientId].GetComponent<AvatarScript>();
             avatar.lineRenderer.enabled = enabled;
 
+            //record ropes from client to server
             if (enabled) {
                 avatar.ropeGlobalPositions.Clear();
                 avatar.ropeGlobalPositions.AddRange(ropePositions);
@@ -66,16 +68,18 @@ public class PlayerController : NetworkBehaviour {
     }
     [ClientRpc]
     public void UpdateRopesClientRpc(bool[] enabledGroup, ulong[] keys, Vector3[] ropePositionsGroup, int[] indexSeperator) {
-        //error checking
         try {
+            //error checking
             if (IsServer) { return; }
-            if (gameNetcodeManager == null) {
+            if (gameNetcodeManager == null) { //game manager reference resets for unknown reason sometimes
                 Debug.Log("Game Netcode Manager is Null");
                 gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
                 Debug.Log("Fixing...");
             }
+
+            //Rope Visuals
             for (int i = 0; i < keys.Length; i++) {
-                if (keys[i] == NetworkManager.LocalClientId) { continue; }
+                if (keys[i] == NetworkManager.LocalClientId) { continue; } //ignore if info is for own client
                 AvatarScript avatar = gameNetcodeManager.avatars[keys[i]].GetComponent<AvatarScript>();
                 bool enabled = enabledGroup[i];
 
@@ -100,6 +104,7 @@ public class PlayerController : NetworkBehaviour {
         }
 
         //movement direction
+        //TODO - Low Priority - Rewrite to use camera pivot's direction
         Vector3 forwardValue = transform.forward;
         direction = Vector3.zero;
 
@@ -115,17 +120,17 @@ public class PlayerController : NetworkBehaviour {
                 Physics.Raycast(new Ray(transform.position, rope[^1].transform.position - transform.position), out var hit);
 
 
-                if (hit.collider.gameObject != null) {
-                    if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) {
-                        Physics.Raycast(new Ray(transform.position, rope[^2].transform.position - transform.position), out hit);
-                        if (hit.collider.gameObject == rope[^2]) {
+                if (hit.collider.gameObject != null) { //if something is hit
+                    if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) { //test if that thing was an anchor node
+                        Physics.Raycast(new Ray(transform.position, rope[^2].transform.position - transform.position), out hit); 
+                        if (hit.collider.gameObject == rope[^2]) { //if the 2 previous nodes are hit delete the last node
                             Destroy(rope[^1]);
                             rope.Remove(rope[^1]);
                             ropeGlobalPositions.RemoveAt(ropeGlobalPositions.Count - 1);
                             AttachAvatarToRope();
 
                         }
-                    } else if (hit.collider.gameObject != rope[^1]) {
+                    } else if (hit.collider.gameObject != rope[^1]) { //if not a node, create a node
                         CreateAnchorNode(hit);
                     }
                 }
@@ -134,13 +139,15 @@ public class PlayerController : NetworkBehaviour {
 
         if (IsOwner) {
             if (IsServer) {
+                //create info holders
                 Dictionary<ulong, GameObject> avatars = gameNetcodeManager.avatars;
                 List<Vector3> ropePositionsGroup = new List<Vector3>();
                 List<ulong> keys = new List<ulong>();
-                List<int> indexSeperator = new List<int> {0};
+                List<int> indexSeperator = new List<int> {0}; //can't send multidimensional array, this gives key to seperate the info
                 List<bool> enabledGroup = new List<bool>();
 
-                AvatarScript avatar;
+                //fill in info
+                AvatarScript avatar; //temp holder variable
                 foreach (var key in avatars.Keys) {
                     avatar = avatars[key].GetComponent<AvatarScript>();
 
@@ -151,7 +158,6 @@ public class PlayerController : NetworkBehaviour {
                 }
 
                 UpdateRopesClientRpc(enabledGroup.ToArray(), keys.ToArray(), ropePositionsGroup.ToArray(), indexSeperator.ToArray());
-
             } else {
                 UpdateRopeServerRpc(lineRenderer.enabled, avatar.GetComponent<AvatarScript>().ropeGlobalPositions.ToArray());
             }

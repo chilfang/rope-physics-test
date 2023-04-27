@@ -38,6 +38,7 @@ public class AvatarScript : NetworkBehaviour {
     }
 
     private void Update() {
+        //rope visuals
         if (lineRenderer.enabled) {
             lineRenderer.positionCount = ropeGlobalPositions.Count + 1;
             for (int i = ropeGlobalPositions.Count; i > 0; i--) {
