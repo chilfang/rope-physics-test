@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class AvatarScript : MonoBehaviour {
+public class AvatarScript : NetworkBehaviour {
     public PlayerController playerController = null;
 
     private List<int> ceilingBlockers = new List<int>();
@@ -10,9 +11,41 @@ public class AvatarScript : MonoBehaviour {
 
     private new Rigidbody rigidbody;
 
+    public List<Vector3> ropeGlobalPositions;
+    [SerializeField]
+    public LineRenderer lineRenderer;
+
     // Start is called before the first frame update
     void Start() {
         rigidbody = GetComponent<Rigidbody>();
+        ropeGlobalPositions = new List<Vector3>();
+    }
+
+    public override void OnNetworkSpawn() {
+        GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>().avatars.Add(OwnerClientId, gameObject);
+        Debug.Log("spawn: " + OwnerClientId);
+
+        base.OnNetworkSpawn();
+    }
+
+    public override void OnDestroy() {
+        if (OwnerClientId == 0) { Debug.Log("despawn: 0\nGame Closing"); return; }
+        GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>().avatars.Remove(OwnerClientId);
+        Debug.Log("despawn: " + OwnerClientId);
+        
+
+        base.OnDestroy();
+    }
+
+    private void Update() {
+        //rope visuals
+        if (lineRenderer.enabled) {
+            lineRenderer.positionCount = ropeGlobalPositions.Count + 1;
+            for (int i = ropeGlobalPositions.Count; i > 0; i--) {
+                lineRenderer.SetPosition(i, ropeGlobalPositions[^i] - transform.position);
+            }
+            lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
     }
 
     public void OnCollisionEnter(Collision collision) {

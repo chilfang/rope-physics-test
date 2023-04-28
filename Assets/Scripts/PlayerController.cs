@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour {
+public class PlayerController : NetworkBehaviour {
     private bool ForwardCheck;
     private bool LeftCheck;
     private bool RightCheck;
@@ -15,8 +16,9 @@ public class PlayerController : MonoBehaviour {
 
 
     GUIController guiController;
+    GameNetcodeManager gameNetcodeManager;
     [SerializeField] GameObject avatar;
-    [SerializeField] LineRenderer lineRenderer;
+    LineRenderer lineRenderer;
 
 
     public float force; //0.4
@@ -29,25 +31,139 @@ public class PlayerController : MonoBehaviour {
 
 
     private RaycastHit anchorInfo;
-    private List<GameObject> rope = new List<GameObject>();
+    public List<GameObject> rope = new List<GameObject>();
+    public List<Vector3> ropeGlobalPositions;
 
 
     // Start is called before the first frame update
     void Start() {
         guiController = GetComponent<GUIController>();
+        lineRenderer = avatar.GetComponent<AvatarScript>().lineRenderer;
+        gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+        ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositions;
     }
 
-    // Update is called once per frame
-    void Update() {
-        Vector3 forwardValue = transform.forward;
+    [ServerRpc(RequireOwnership = false)]
+    public void UpdateRopeServerRpc(bool enabled, Vector3[] ropePositions, ServerRpcParams serverParams = default) {
+        try {
+            //error checking
+            if (gameNetcodeManager == null) { //game manager reference resets for unknown reason sometimes
+                Debug.Log("Game Netcode Manager is Null");
+                gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+                Debug.Log("Fixing...");
+            }
 
-        //if (MovementInputCheck = ForwardCheck || LeftCheck || RightCheck || BackwardCheck) {
+            //update visuals on host client
+            var avatar = gameNetcodeManager.avatars[serverParams.Receive.SenderClientId].GetComponent<AvatarScript>();
+            avatar.lineRenderer.enabled = enabled;
+
+            //record ropes from client to server
+            if (enabled) {
+                avatar.ropeGlobalPositions.Clear();
+                avatar.ropeGlobalPositions.AddRange(ropePositions);
+            }
+        } catch (System.Exception e) {
+            Debug.Log(e);
+        }
+    }
+    [ClientRpc]
+    public void UpdateRopesClientRpc(bool[] enabledGroup, ulong[] keys, Vector3[] ropePositionsGroup, int[] indexSeperator) {
+        try {
+            //error checking
+            if (IsServer) { return; }
+            if (gameNetcodeManager == null) { //game manager reference resets for unknown reason sometimes
+                Debug.Log("Game Netcode Manager is Null");
+                gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+                Debug.Log("Fixing...");
+            }
+
+            //Rope Visuals
+            for (int i = 0; i < keys.Length; i++) {
+                if (keys[i] == NetworkManager.LocalClientId) { continue; } //ignore if info is for own client
+                AvatarScript avatar = gameNetcodeManager.avatars[keys[i]].GetComponent<AvatarScript>();
+                bool enabled = enabledGroup[i];
+
+                avatar.lineRenderer.enabled = enabled;
+
+                if (enabled) {
+                    avatar.ropeGlobalPositions.Clear();
+                    avatar.ropeGlobalPositions.AddRange(ropePositionsGroup[indexSeperator[i]..indexSeperator[i + 1]]);
+                }
+            }
+        } catch (System.Exception e) {
+            Debug.Log(e);
+        }
+    }
+
+    void Update() {
+        //error checking 
+        if (gameNetcodeManager == null) {
+            Debug.Log("Game Netcode Manager is Null");
+            gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
+            Debug.Log("Fixing...");
+        }
+
+        //movement direction
+        //TODO - Low Priority - Rewrite to use camera pivot's direction
+        Vector3 forwardValue = transform.forward;
         direction = Vector3.zero;
 
         if (ForwardCheck) { direction += forwardValue; }
         if (LeftCheck) { direction += Quaternion.Euler(0, -90, 0) * forwardValue; }
         if (RightCheck) { direction += Quaternion.Euler(0, 90, 0) * forwardValue; }
         if (BackwardCheck) { direction -= forwardValue; }
+
+        //rope mechanics
+        if (lineRenderer.enabled) {
+            if (GrappleSetting == 2) {
+                //rope collision checking
+                Physics.Raycast(new Ray(transform.position, rope[^1].transform.position - transform.position), out var hit);
+
+
+                if (hit.collider.gameObject != null) { //if something is hit
+                    if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) { //test if that thing was an anchor node
+                        Physics.Raycast(new Ray(transform.position, rope[^2].transform.position - transform.position), out hit); 
+                        if (hit.collider.gameObject == rope[^2]) { //if the 2 previous nodes are hit delete the last node
+                            Destroy(rope[^1]);
+                            rope.Remove(rope[^1]);
+                            ropeGlobalPositions.RemoveAt(ropeGlobalPositions.Count - 1);
+                            AttachAvatarToRope();
+
+                        }
+                    } else if (hit.collider.gameObject != rope[^1]) { //if not a node, create a node
+                        CreateAnchorNode(hit);
+                    }
+                }
+            }
+        }
+
+        if (IsOwner) {
+            if (IsServer) {
+                //create info holders
+                Dictionary<ulong, GameObject> avatars = gameNetcodeManager.avatars;
+                List<Vector3> ropePositionsGroup = new List<Vector3>();
+                List<ulong> keys = new List<ulong>();
+                List<int> indexSeperator = new List<int> {0}; //can't send multidimensional array, this gives key to seperate the info
+                List<bool> enabledGroup = new List<bool>();
+
+                //fill in info
+                AvatarScript avatar; //temp holder variable
+                foreach (var key in avatars.Keys) {
+                    avatar = avatars[key].GetComponent<AvatarScript>();
+
+                    keys.Add(key);
+                    ropePositionsGroup.AddRange(avatar.ropeGlobalPositions.ToArray());
+                    indexSeperator.Add(ropePositionsGroup.Count);
+                    enabledGroup.Add(avatar.lineRenderer.enabled);
+                }
+
+                UpdateRopesClientRpc(enabledGroup.ToArray(), keys.ToArray(), ropePositionsGroup.ToArray(), indexSeperator.ToArray());
+            } else {
+                UpdateRopeServerRpc(lineRenderer.enabled, avatar.GetComponent<AvatarScript>().ropeGlobalPositions.ToArray());
+            }
+        }
+    
+        
     }
 
     private void FixedUpdate() {
@@ -85,34 +201,18 @@ public class PlayerController : MonoBehaviour {
             }
 
             if (lineRenderer.enabled) {
-                //rope visuals
-                lineRenderer.positionCount = rope.Count + 1;
-                for (int i = rope.Count; i > 0; i--) {
-                    lineRenderer.SetPosition(i, rope[^i].transform.position - transform.position);
-                }
-                lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
-
-
-                if (GrappleSetting == 2) {
-                    //rope collision checking
-                    Physics.Raycast(new Ray(transform.position, rope[^1].transform.position - transform.position), out var hit);
-
-
-                    if (hit.collider.gameObject != null) {
-                        if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) {
-                            Physics.Raycast(new Ray(transform.position, rope[^2].transform.position - transform.position), out hit);
-                            if (hit.collider.gameObject == rope[^2]) {
-                                Destroy(rope[^1]);
-                                rope.Remove(rope[^1]);
-                                AttachAvatarToRope();
-
-                            }
-                        } else if (hit.collider.gameObject != rope[^1]) {
-                            CreateAnchorNode(hit);
+                //visuals
+                switch (GrappleSetting) {
+                    case 1:
+                        ropeGlobalPositions[0] = rope[0].transform.position;
+                        break;
+                    case 2:
+                        for (int i = 0; i < rope.Count; i++) {
+                            ropeGlobalPositions[i] = rope[i].transform.position;
                         }
-                    }
+
+                        break;
                 }
-                
 
                 //length adjustment
                 ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
@@ -124,6 +224,7 @@ public class PlayerController : MonoBehaviour {
                 }
             }
 
+            
         }
     }
     
@@ -136,6 +237,7 @@ public class PlayerController : MonoBehaviour {
         //create anchor
         var anchor = CreateAnchor();
         rope.Add(anchor.transform.Find("AnchorBall").gameObject);
+        ropeGlobalPositions.Add(rope[^1].transform.position);
 
         //attach avatar to rope
         ConfigurableJoint avatarJoint = transform.parent.gameObject.AddComponent<ConfigurableJoint>();
@@ -147,12 +249,7 @@ public class PlayerController : MonoBehaviour {
         avatarJoint.linearLimitSpring = new SoftJointLimitSpring() { spring = 20, damper = 5 };
 
         AttachAvatarToRope();
-
-        //set line renderer
         lineRenderer.enabled = true;
-        lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
-        lineRenderer.SetPosition(1, rope[0].transform.position - transform.position);
-
     }
 
     private GameObject CreateAnchor() {
@@ -165,26 +262,16 @@ public class PlayerController : MonoBehaviour {
         anchor.transform.rotation = Quaternion.LookRotation(anchorInfo.point - transform.position);
         anchor.transform.localScale = new Vector3(10, 10, 10);
 
-        switch (GrappleSetting) {
-            case 1:
-                //make anchor joint
-                ConfigurableJoint anchorJoint = anchor.AddComponent<ConfigurableJoint>();
-                anchorJoint.xMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.yMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.zMotion = ConfigurableJointMotion.Limited;
-                anchorJoint.angularXMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.angularYMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.angularZMotion = ConfigurableJointMotion.Locked;
-                anchorJoint.connectedBody = anchorInfo.rigidbody;
-                break;
-            case 2:
-                //make anchor rigidbody
-                Rigidbody anchorRigidbody = anchor.AddComponent<Rigidbody>();
-                anchorRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                anchorRigidbody.isKinematic = true;
-                break;
-        }
-        
+
+        ConfigurableJoint anchorJoint = anchor.AddComponent<ConfigurableJoint>();
+        anchorJoint.xMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.yMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.zMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularXMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularYMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.angularZMotion = ConfigurableJointMotion.Locked;
+        anchorJoint.connectedBody = anchorInfo.rigidbody;
+
 
 
         //make anchor ball
@@ -240,20 +327,31 @@ public class PlayerController : MonoBehaviour {
         anchorNode.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/White");
 
         //positioning
+        anchorNode.transform.localScale = new Vector3(.2f, .2f, .2f);
         anchorNode.transform.parent = rope[^1].transform;
         anchorNode.transform.position = hit.point;
-        anchorNode.transform.localScale = new Vector3(1, 1, 1);
 
+        /*
         //rigidbody
         Rigidbody rigidBody = anchorNode.AddComponent<Rigidbody>();
         rigidBody.constraints = RigidbodyConstraints.FreezePosition;
         rigidBody.isKinematic = true;
+        */
+        ConfigurableJoint joint = anchorNode.AddComponent<ConfigurableJoint>();
+        joint.connectedBody = hit.rigidbody;
+        joint.xMotion = ConfigurableJointMotion.Locked;
+        joint.yMotion = ConfigurableJointMotion.Locked;
+        joint.zMotion = ConfigurableJointMotion.Locked;
+        joint.angularXMotion = ConfigurableJointMotion.Locked;
+        joint.angularYMotion = ConfigurableJointMotion.Locked;
+        joint.angularZMotion = ConfigurableJointMotion.Locked;
 
         //other
         anchorNode.layer = LayerMask.NameToLayer("Rope");
         anchorNode.AddComponent<SphereCollider>();
 
         rope.Add(anchorNode);
+        ropeGlobalPositions.Add(anchorNode.transform.position);
 
         AttachAvatarToRope();
 
@@ -262,24 +360,18 @@ public class PlayerController : MonoBehaviour {
     private void AttachAvatarToRope() {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
-        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1, 0))).magnitude };
-
+        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1.5f, 0))).magnitude };
     }
 
     private void ClearRope() {
         lineRenderer.enabled = false;
 
         Destroy(rope[0].transform.parent.gameObject);
-
-        /*
-        foreach (GameObject ropePiece in rope) {
-            Destroy(ropePiece);
-        }
-        */
+        Destroy(transform.parent.gameObject.GetComponent<ConfigurableJoint>());
 
         rope.Clear();
+        avatar.GetComponent<AvatarScript>().ropeGlobalPositions.Clear();
 
-        Destroy(transform.parent.gameObject.GetComponent<ConfigurableJoint>());
     }
 
 
@@ -318,8 +410,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void RMB(InputAction.CallbackContext context) {
-
         if (context.started) {
+            //if (lineRenderer.enabled) { ClearRope(); }
             Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;
             if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.gameObject != transform.parent.gameObject) {
                 if (Physics.Raycast(new Ray(transform.position, anchorInfo.point - transform.position), out anchorInfo)) {
