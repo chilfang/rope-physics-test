@@ -20,8 +20,8 @@ public class Debugger : NetworkBehaviour {
 
     
     string filename = "";
-    void OnEnable() { Application.logMessageReceived += Log; }
-    void OnDisable() { Application.logMessageReceived -= Log; }
+    //void OnEnable() { Application.logMessageReceived += Log; }
+    //void OnDisable() { Application.logMessageReceived -= Log; }
 
     public void Log(string logString, string stackTrace, LogType type) {
         if (filename == "") {
