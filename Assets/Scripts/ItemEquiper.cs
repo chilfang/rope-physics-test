@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class ItemEquiper : MonoBehaviour {
     [SerializeField]
-    GameObject grappleShooter;
+    public GameObject grappleShooter;
 
     Animator animator;
 
     Transform rightHand;
+
+    public string itemsEquiped = "";
 
     void Start() {
         animator = gameObject.GetComponent<Animator>();
@@ -25,6 +27,8 @@ public class ItemEquiper : MonoBehaviour {
         grappleShooter = grappleShooter.transform.parent.gameObject;
         grappleShooter.transform.parent = rightHand.transform;
         grappleShooter.transform.position = rightHand.transform.position;
+
+        itemsEquiped += "GrappleShooter";
     }
     private void Update() {
         /*

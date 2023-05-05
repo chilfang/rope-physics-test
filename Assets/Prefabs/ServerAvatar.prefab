@@ -267,7 +267,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerController: {fileID: 4567002226484361595}
-  RopeGlobalPositons: []
+  ropeGlobalPositions: []
   lineRenderer: {fileID: 4567002225791126496}
 --- !u!114 &4567002225950430853
 MonoBehaviour:
@@ -521,6 +521,8 @@ MonoBehaviour:
   airForce: 0.05
   sprintSpeedAddition: 0.2
   touchingGround: 0
+  rope: []
+  ropeGlobalPositions: []
 --- !u!114 &4567002226484361594
 MonoBehaviour:
   m_ObjectHideFlags: 0

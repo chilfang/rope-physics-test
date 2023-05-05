@@ -733,7 +733,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 434454309f3ff3949ba1b7c57a059239, type: 3}
       propertyPath: m_Name
-      value: Avatar (1)
+      value: Avatar
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 434454309f3ff3949ba1b7c57a059239, type: 3}
       propertyPath: m_Controller
@@ -2334,7 +2334,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d83bd788ab78b14585d8f58e6269128, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerServerPrefab: {fileID: 4567002225950430862, guid: a24c7db1122cc6846aa8e9ecf42eb079, type: 3}
+  playerServerPrefab: {fileID: 5542737245514051238, guid: 459f0f94e91215240ac4fbea73278634, type: 3}
   playerClientPrefab: {fileID: 4567002225950430862, guid: 60fda009878b6464fa1488ebcc1ed359, type: 3}
 --- !u!4 &782628377
 Transform:

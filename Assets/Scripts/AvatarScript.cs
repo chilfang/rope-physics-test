@@ -15,8 +15,12 @@ public class AvatarScript : NetworkBehaviour {
     [SerializeField]
     public LineRenderer lineRenderer;
 
+
+    protected Animator animator;
+
     // Start is called before the first frame update
     void Start() {
+        animator = gameObject.GetComponent<Animator>();
         rigidbody = GetComponent<Rigidbody>();
         ropeGlobalPositions = new List<Vector3>();
     }
@@ -46,6 +50,11 @@ public class AvatarScript : NetworkBehaviour {
             }
             lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
+    }
+
+    private void FixedUpdate() {
+        animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
+        
     }
 
     public void OnCollisionEnter(Collision collision) {

@@ -12,13 +12,14 @@ public class PlayerController : NetworkBehaviour {
     private bool JumpCheck;
     private bool ShiftCheck;
     private bool CtrlCheck;
-    public int GrappleSetting = 1;
 
+    public int GrappleSetting = 1;
 
     GUIController guiController;
     GameNetcodeManager gameNetcodeManager;
     [SerializeField] GameObject avatar;
     LineRenderer lineRenderer;
+    ItemEquiper itemEquiper;
 
 
     public float force; //0.4
@@ -34,6 +35,8 @@ public class PlayerController : NetworkBehaviour {
     public List<GameObject> rope = new List<GameObject>();
     public List<Vector3> ropeGlobalPositions;
 
+    public GameObject grappleShootObject;
+
 
     // Start is called before the first frame update
     void Start() {
@@ -41,6 +44,7 @@ public class PlayerController : NetworkBehaviour {
         lineRenderer = avatar.GetComponent<AvatarScript>().lineRenderer;
         gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
         ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositions;
+        itemEquiper = avatar.GetComponent<ItemEquiper>();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -361,6 +365,7 @@ public class PlayerController : NetworkBehaviour {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
         avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1.5f, 0))).magnitude };
+        avatar.GetComponent<IKController>().rightHandObj = rope[0].transform;
     }
 
     private void ClearRope() {
@@ -371,7 +376,7 @@ public class PlayerController : NetworkBehaviour {
 
         rope.Clear();
         avatar.GetComponent<AvatarScript>().ropeGlobalPositions.Clear();
-
+        avatar.GetComponent<IKController>().rightHandObj = null;
     }
 
 
@@ -411,11 +416,15 @@ public class PlayerController : NetworkBehaviour {
 
     public void RMB(InputAction.CallbackContext context) {
         if (context.started) {
-            //if (lineRenderer.enabled) { ClearRope(); }
-            Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;
-            if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.gameObject != transform.parent.gameObject) {
-                if (Physics.Raycast(new Ray(transform.position, anchorInfo.point - transform.position), out anchorInfo)) {
-                    CreateRope();
+            if (itemEquiper.itemsEquiped.Contains("GrappleShooter")) {
+                grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
+
+                //if (lineRenderer.enabled) { ClearRope(); }
+                Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;
+                if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.gameObject != transform.parent.gameObject) {
+                    if (Physics.Raycast(new Ray(grappleShootObject.transform.position, anchorInfo.point - grappleShootObject.transform.position), out anchorInfo)) {
+                        CreateRope();
+                    }
                 }
             }
         } else if (context.canceled && lineRenderer.enabled) {
