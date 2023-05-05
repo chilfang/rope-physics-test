@@ -18,6 +18,7 @@ public class PlayerController : NetworkBehaviour {
     GUIController guiController;
     GameNetcodeManager gameNetcodeManager;
     [SerializeField] GameObject avatar;
+    GameObject model;
     LineRenderer lineRenderer;
     ItemEquiper itemEquiper;
 
@@ -45,6 +46,7 @@ public class PlayerController : NetworkBehaviour {
         gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
         ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositions;
         itemEquiper = avatar.GetComponent<ItemEquiper>();
+        model = avatar.transform.Find("Avatar").gameObject;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -121,12 +123,12 @@ public class PlayerController : NetworkBehaviour {
         if (lineRenderer.enabled) {
             if (GrappleSetting == 2) {
                 //rope collision checking
-                Physics.Raycast(new Ray(transform.position, rope[^1].transform.position - transform.position), out var hit);
+                Physics.Raycast(new Ray(grappleShootObject.transform.position, rope[^1].transform.position - grappleShootObject.transform.position), out var hit);
 
 
                 if (hit.collider.gameObject != null) { //if something is hit
                     if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) { //test if that thing was an anchor node
-                        Physics.Raycast(new Ray(transform.position, rope[^2].transform.position - transform.position), out hit); 
+                        Physics.Raycast(new Ray(grappleShootObject.transform.position, rope[^2].transform.position - grappleShootObject.transform.position), out hit); 
                         if (hit.collider.gameObject == rope[^2]) { //if the 2 previous nodes are hit delete the last node
                             Destroy(rope[^1]);
                             rope.Remove(rope[^1]);
@@ -221,7 +223,7 @@ public class PlayerController : NetworkBehaviour {
                 //length adjustment
                 ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
                 float ropeChangeRate = 0.05f;
-                if (ShiftCheck && avatarJoint.linearLimit.limit > 0.01f) {
+                if (ShiftCheck && avatarJoint.linearLimit.limit > 3.5f) {
                     avatarJoint.linearLimit = new SoftJointLimit() { limit = avatarJoint.linearLimit.limit - ropeChangeRate };
                 } else if (CtrlCheck) {
                     avatarJoint.linearLimit = new SoftJointLimit() { limit = avatarJoint.linearLimit.limit + ropeChangeRate };
@@ -263,7 +265,7 @@ public class PlayerController : NetworkBehaviour {
         anchor.AddComponent<MeshFilter>().mesh = Resources.Load<Mesh>("Meshes/Anchor");
         anchor.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/White");
         anchor.transform.position = anchorInfo.point;
-        anchor.transform.rotation = Quaternion.LookRotation(anchorInfo.point - transform.position);
+        anchor.transform.rotation = Quaternion.LookRotation(anchorInfo.point - grappleShootObject.transform.position);
         anchor.transform.localScale = new Vector3(10, 10, 10);
 
 
@@ -364,8 +366,8 @@ public class PlayerController : NetworkBehaviour {
     private void AttachAvatarToRope() {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
-        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (transform.position + new Vector3(0, 1.5f, 0))).magnitude };
-        avatar.GetComponent<IKController>().rightHandObj = rope[0].transform;
+        avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (grappleShootObject.transform.position)).magnitude };
+        model.GetComponent<IKController>().rightHandObj = rope[0].transform;
     }
 
     private void ClearRope() {
@@ -376,7 +378,7 @@ public class PlayerController : NetworkBehaviour {
 
         rope.Clear();
         avatar.GetComponent<AvatarScript>().ropeGlobalPositions.Clear();
-        avatar.GetComponent<IKController>().rightHandObj = null;
+        model.GetComponent<IKController>().rightHandObj = null;
     }
 
 
@@ -417,7 +419,7 @@ public class PlayerController : NetworkBehaviour {
     public void RMB(InputAction.CallbackContext context) {
         if (context.started) {
             if (itemEquiper.itemsEquiped.Contains("GrappleShooter")) {
-                grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
+                //grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
 
                 //if (lineRenderer.enabled) { ClearRope(); }
                 Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;

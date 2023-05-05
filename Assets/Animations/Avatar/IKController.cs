@@ -12,6 +12,12 @@ public class IKController : MonoBehaviour {
     public Transform rightHandObj = null;
     public Transform lookObj = null;
 
+    public bool head = true;
+    public bool rightHand = true;
+    public bool feet = true;
+
+    public int level;
+
     void Start() {
         animator = gameObject.GetComponent<Animator>();
     }
@@ -22,20 +28,21 @@ public class IKController : MonoBehaviour {
             //if the IK is active, set the position and rotation directly to the goal.
             if (ikActive) {
                 // Set the look target position, if one has been assigned
-                if (lookObj != null) {
+                if (lookObj != null && head) {
                     animator.SetLookAtWeight(1);
                     animator.SetLookAtPosition(lookObj.position);
                 }
+                
 
                 // Set the right hand target position and rotation, if one has been assigned
-                if (rightHandObj != null) {
+                if (rightHandObj != null && rightHand) {
                     animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1);
                     //animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 1);
                     animator.SetIKPosition(AvatarIKGoal.RightHand, rightHandObj.position);
                     //animator.SetIKRotation(AvatarIKGoal.RightHand, rightHandObj.rotation);
                 }
 
-                if (true) {
+                if (feet) {
                     //left foot
                     animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1);
                     animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1);

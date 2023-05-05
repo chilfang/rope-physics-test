@@ -13,7 +13,7 @@ public class ItemEquiper : MonoBehaviour {
     public string itemsEquiped = "";
 
     void Start() {
-        animator = gameObject.GetComponent<Animator>();
+        animator = gameObject.GetComponentInChildren<Animator>();
         rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
 
         grappleShooter = Instantiate(grappleShooter);

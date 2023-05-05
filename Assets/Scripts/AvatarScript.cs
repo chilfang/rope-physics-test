@@ -4,7 +4,9 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class AvatarScript : NetworkBehaviour {
+    [SerializeField]
     public PlayerController playerController = null;
+    public IKController ikController;
 
     private List<int> ceilingBlockers = new List<int>();
     private List<int> floorBlockers = new List<int>();
@@ -14,15 +16,18 @@ public class AvatarScript : NetworkBehaviour {
     public List<Vector3> ropeGlobalPositions;
     [SerializeField]
     public LineRenderer lineRenderer;
-
+    ItemEquiper itemEquiper;
 
     protected Animator animator;
 
     // Start is called before the first frame update
     void Start() {
-        animator = gameObject.GetComponent<Animator>();
+        animator = gameObject.GetComponentInChildren<Animator>();
         rigidbody = GetComponent<Rigidbody>();
         ropeGlobalPositions = new List<Vector3>();
+        ikController = GetComponent<IKController>();
+        itemEquiper = GetComponent<ItemEquiper>();
+        Application.onBeforeRender += UpdateLineRenderer;
     }
 
     public override void OnNetworkSpawn() {
@@ -33,28 +38,39 @@ public class AvatarScript : NetworkBehaviour {
     }
 
     public override void OnDestroy() {
+        Application.onBeforeRender -= UpdateLineRenderer;
+
         if (OwnerClientId == 0) { Debug.Log("despawn: 0\nGame Closing"); return; }
         GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>().avatars.Remove(OwnerClientId);
         Debug.Log("despawn: " + OwnerClientId);
-        
 
         base.OnDestroy();
     }
 
     private void Update() {
-        //rope visuals
-        if (lineRenderer.enabled) {
-            lineRenderer.positionCount = ropeGlobalPositions.Count + 1;
-            for (int i = ropeGlobalPositions.Count; i > 0; i--) {
-                lineRenderer.SetPosition(i, ropeGlobalPositions[^i] - transform.position);
-            }
-            lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
+        if (playerController.grappleShootObject == null && itemEquiper.itemsEquiped.Contains("GrappleShooter")) {
+                playerController.grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
+        }
+
+        if (playerController.touchingGround == false && lineRenderer.enabled) {
+            //TODO - set model to lookrotation in direciton of anchor
         }
     }
 
     private void FixedUpdate() {
         animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
-        
+    }
+
+    //rope visuals
+    private void UpdateLineRenderer() {
+        if (lineRenderer.enabled) {
+            lineRenderer.positionCount = ropeGlobalPositions.Count + 1;
+            lineRenderer.SetPosition(0, playerController.grappleShootObject.transform.position);
+            for (int i = ropeGlobalPositions.Count; i > 0; i--) {
+                lineRenderer.SetPosition(i, ropeGlobalPositions[^i]);
+            }
+            lineRenderer.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
     }
 
     public void OnCollisionEnter(Collision collision) {
@@ -83,9 +99,15 @@ public class AvatarScript : NetworkBehaviour {
 
     public void TouchingGround() {
         playerController.touchingGround = true;
+        //ikController.rightHand = true;
+        //animator.SetBool("InAir", false);
+        //animator.Play("Movement");
     }
     public void NotTouchingGround() {
         playerController.touchingGround = false;
+        //ikController.rightHand = false;
+        //animator.SetBool("InAir", true);
+        //animator.Play("Armature|TPose");
     }
 
 
