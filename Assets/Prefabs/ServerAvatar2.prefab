@@ -90,7 +90,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 101042987250330630}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.55700016, y: 1.0970001, z: -4.35}
+  m_LocalPosition: {x: 0.55700016, y: 0.87, z: -4.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -222,6 +222,7 @@ MonoBehaviour:
   ikController: {fileID: 0}
   ropeGlobalPositions: []
   lineRenderer: {fileID: 101042987638499952}
+  model: {fileID: 7605410867064777638}
 --- !u!114 &101042987278006037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -769,7 +770,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 101042988219245358}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.386, z: 0.161}
+  m_LocalPosition: {x: 0, y: 3.32, z: 0.161}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3224,7 +3225,7 @@ GameObject:
   - component: {fileID: 7147885111535343726}
   - component: {fileID: 2513495959338675194}
   m_Layer: 0
-  m_Name: Avatar
+  m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

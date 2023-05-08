@@ -16,6 +16,8 @@ public class AvatarScript : NetworkBehaviour {
     public List<Vector3> ropeGlobalPositions;
     [SerializeField]
     public LineRenderer lineRenderer;
+    [SerializeField]
+    GameObject model;
     ItemEquiper itemEquiper;
 
     protected Animator animator;
@@ -52,8 +54,16 @@ public class AvatarScript : NetworkBehaviour {
                 playerController.grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
         }
 
-        if (playerController.touchingGround == false && lineRenderer.enabled) {
-            //TODO - set model to lookrotation in direciton of anchor
+        if (!playerController.touchingGround && lineRenderer.enabled) {
+            var direction = rigidbody.velocity;
+            
+            if (Mathf.Abs(direction.x) < 1.5 && Mathf.Abs(direction.z) < 1.5) {
+                direction.y = 0;
+            }
+            
+            model.transform.rotation = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - model.transform.position); //, ropeGlobalPositions[0] - model.transform.position
+        } else if (model.transform.rotation != transform.rotation)  {
+            model.transform.rotation = transform.rotation;
         }
     }
 

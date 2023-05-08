@@ -46,7 +46,7 @@ public class PlayerController : NetworkBehaviour {
         gameNetcodeManager = GameObject.Find("GameNetcodeManager").GetComponent<GameNetcodeManager>();
         ropeGlobalPositions = avatar.GetComponent<AvatarScript>().ropeGlobalPositions;
         itemEquiper = avatar.GetComponent<ItemEquiper>();
-        model = avatar.transform.Find("Avatar").gameObject;
+        model = avatar.transform.Find("Model").gameObject;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -220,10 +220,10 @@ public class PlayerController : NetworkBehaviour {
                         break;
                 }
 
-                //length adjustment
+                //length adjustment / reeling
                 ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
                 float ropeChangeRate = 0.05f;
-                if (ShiftCheck && avatarJoint.linearLimit.limit > 3.5f) {
+                if (ShiftCheck && avatarJoint.linearLimit.limit > 0.5f) {
                     avatarJoint.linearLimit = new SoftJointLimit() { limit = avatarJoint.linearLimit.limit - ropeChangeRate };
                 } else if (CtrlCheck) {
                     avatarJoint.linearLimit = new SoftJointLimit() { limit = avatarJoint.linearLimit.limit + ropeChangeRate };
@@ -365,6 +365,7 @@ public class PlayerController : NetworkBehaviour {
 
     private void AttachAvatarToRope() {
         ConfigurableJoint avatarJoint = transform.parent.gameObject.GetComponent<ConfigurableJoint>();
+        avatarJoint.anchor = new Vector3(0, 3.29f, 0);
         avatarJoint.connectedBody = rope[^1].GetComponent<Rigidbody>();
         avatarJoint.linearLimit = new SoftJointLimit() { limit = (rope[^1].transform.position - (grappleShootObject.transform.position)).magnitude };
         model.GetComponent<IKController>().rightHandObj = rope[0].transform;
