@@ -164,6 +164,9 @@ GameObject:
   - component: {fileID: 2293694611941849432}
   - component: {fileID: 2798246289902492641}
   - component: {fileID: 2596341941916675698}
+  - component: {fileID: 5196710110988706781}
+  - component: {fileID: 1494633293034812926}
+  - component: {fileID: 6554410392732544400}
   m_Layer: 0
   m_Name: ServerAvatar2
   m_TagString: Untagged
@@ -186,7 +189,7 @@ Transform:
   - {fileID: 101042987811395817}
   - {fileID: 101042988219245359}
   - {fileID: 101042987638499959}
-  - {fileID: 3847819491868276578}
+  - {fileID: 3125026555953330592}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -222,7 +225,7 @@ MonoBehaviour:
   ikController: {fileID: 0}
   ropeGlobalPositions: []
   lineRenderer: {fileID: 101042987638499952}
-  model: {fileID: 7605410867064777638}
+  modelPivot: {fileID: 1761738251570397974}
 --- !u!114 &101042987278006037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,8 +304,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70e75e0b93ea8cc4095015692f1dac1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grappleShooter: {fileID: 919132149155446097, guid: dadd7188630d9304aaa2b5c79116caaa, type: 3}
+  grappleShooter: {fileID: 2765346324371140889, guid: 0e05430351b45f04da491779df023b1f, type: 3}
   itemsEquiped: 
+--- !u!136 &5196710110988706781
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101042987278006046}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.01
+  m_Height: 1.2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.68, z: 0.13}
+--- !u!136 &1494633293034812926
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101042987278006046}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.1
+  m_Height: 0.55
+  m_Direction: 1
+  m_Center: {x: 0.13, y: 1, z: 0.13}
+--- !u!136 &6554410392732544400
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101042987278006046}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.1
+  m_Height: 0.55
+  m_Direction: 1
+  m_Center: {x: -0.13, y: 1, z: 0.13}
 --- !u!1 &101042987638499958
 GameObject:
   m_ObjectHideFlags: 0
@@ -500,6 +545,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GrappleSetting: 1
   avatar: {fileID: 101042987278006046}
+  model: {fileID: 7605410867064777638}
   force: 0.2
   airForce: 0.05
   sprintSpeedAddition: 0.2
@@ -770,7 +816,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 101042988219245358}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.32, z: 0.161}
+  m_LocalPosition: {x: 0, y: 1.894, z: 0.161}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1146,6 +1192,38 @@ Transform:
   - {fileID: 497333632582779579}
   m_Father: {fileID: 729606945367514368}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1761738251570397974
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3125026555953330592}
+  m_Layer: 0
+  m_Name: ModelPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3125026555953330592
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1761738251570397974}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3847819491868276578}
+  m_Father: {fileID: 101042987278006043}
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1882893481748018591
 GameObject:
@@ -2819,7 +2897,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6877256798838231967}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.0893893, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 20, y: 10, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3238,15 +3316,15 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7605410867064777638}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4583185237656777216}
   - {fileID: 2752006150599022055}
-  m_Father: {fileID: 101042987278006043}
-  m_RootOrder: 3
+  m_Father: {fileID: 3125026555953330592}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7147885111535343726
 Animator:
@@ -3615,7 +3693,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2752006150599022055}
-  - component: {fileID: 66454685978067947}
   - component: {fileID: 3579858689015756274}
   m_Layer: 0
   m_Name: Armature
@@ -3632,7 +3709,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8667559212455664666}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -1.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 72.912, y: 72.912, z: 72.912}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3642,20 +3719,6 @@ Transform:
   m_Father: {fileID: 3847819491868276578}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!136 &66454685978067947
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8667559212455664666}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.0000717
-  m_Height: 0.018
-  m_Direction: 2
-  m_Center: {x: 0, y: -0.002, z: 0.01}
 --- !u!65 &3579858689015756274
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -17,7 +17,7 @@ public class AvatarScript : NetworkBehaviour {
     [SerializeField]
     public LineRenderer lineRenderer;
     [SerializeField]
-    GameObject model;
+    GameObject modelPivot;
     ItemEquiper itemEquiper;
 
     protected Animator animator;
@@ -61,9 +61,9 @@ public class AvatarScript : NetworkBehaviour {
                 direction.y = 0;
             }
             
-            model.transform.rotation = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - model.transform.position); //, ropeGlobalPositions[0] - model.transform.position
-        } else if (model.transform.rotation != transform.rotation)  {
-            model.transform.rotation = transform.rotation;
+            modelPivot.transform.rotation = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - modelPivot.transform.position); //, ropeGlobalPositions[0] - model.transform.position
+        } else if (modelPivot.transform.rotation != transform.rotation)  {
+            modelPivot.transform.rotation = transform.rotation;
         }
     }
 
