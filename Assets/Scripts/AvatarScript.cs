@@ -22,6 +22,8 @@ public class AvatarScript : NetworkBehaviour {
 
     protected Animator animator;
 
+    private Quaternion modelAirDirection;
+
     // Start is called before the first frame update
     void Start() {
         animator = gameObject.GetComponentInChildren<Animator>();
@@ -61,14 +63,22 @@ public class AvatarScript : NetworkBehaviour {
                 direction.y = 0;
             }
             
-            modelPivot.transform.rotation = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - modelPivot.transform.position); //, ropeGlobalPositions[0] - model.transform.position
-        } else if (modelPivot.transform.rotation != transform.rotation)  {
+            modelAirDirection = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - modelPivot.transform.position); //, ropeGlobalPositions[0] - model.transform.position
+            modelPivot.transform.rotation = modelAirDirection;
+        } else if (playerController.touchingGround && modelPivot.transform.rotation != transform.rotation)  {
             modelPivot.transform.rotation = transform.rotation;
+        } else if (!playerController.touchingGround) {
+            modelPivot.transform.rotation = modelAirDirection;
+
         }
     }
 
     private void FixedUpdate() {
-        animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
+        if (playerController.touchingGround) {
+            animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
+        } else {
+            animator.SetFloat("Speed", 3);
+        }
     }
 
     //rope visuals
