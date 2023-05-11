@@ -22,7 +22,7 @@ public class AvatarScript : NetworkBehaviour {
 
     protected Animator animator;
 
-    private Quaternion modelAirDirection;
+    Vector3 upAirDirection;
 
     // Start is called before the first frame update
     void Start() {
@@ -56,29 +56,28 @@ public class AvatarScript : NetworkBehaviour {
                 playerController.grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
         }
 
-        if (!playerController.touchingGround && lineRenderer.enabled) {
+        if (!playerController.touchingGround) {
             var direction = rigidbody.velocity;
-            
+
             if (Mathf.Abs(direction.x) < 1.5 && Mathf.Abs(direction.z) < 1.5) {
                 direction.y = 0;
             }
-            
-            modelAirDirection = Quaternion.LookRotation(direction, ropeGlobalPositions[0] - modelPivot.transform.position); //, ropeGlobalPositions[0] - model.transform.position
-            modelPivot.transform.rotation = modelAirDirection;
-        } else if (playerController.touchingGround && modelPivot.transform.rotation != transform.rotation)  {
-            modelPivot.transform.rotation = transform.rotation;
-        } else if (!playerController.touchingGround) {
-            modelPivot.transform.rotation = modelAirDirection;
 
+            if (lineRenderer.enabled) {
+                upAirDirection = ropeGlobalPositions[0] - modelPivot.transform.position;
+            }
+            modelPivot.transform.rotation = Quaternion.LookRotation(direction, upAirDirection); //, ropeGlobalPositions[0] - model.transform.position
+            
+        } else if (modelPivot.transform.rotation != transform.rotation) {
+            modelPivot.transform.rotation = transform.rotation;
+        } else {
+            upAirDirection = Vector3.up;
         }
     }
 
     private void FixedUpdate() {
-        if (playerController.touchingGround) {
-            animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
-        } else {
-            animator.SetFloat("Speed", 3);
-        }
+        animator.SetFloat("Speed", (float) System.Math.Round(rigidbody.velocity.magnitude, 2));
+        animator.SetBool("InAir", !playerController.touchingGround);
     }
 
     //rope visuals

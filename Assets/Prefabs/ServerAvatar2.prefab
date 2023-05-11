@@ -3360,7 +3360,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ikActive: 1
   rightHandObj: {fileID: 0}
-  lookObj: {fileID: 0}
+  lookObj: {fileID: 101042987250330625}
   head: 1
   rightHand: 1
   feet: 1

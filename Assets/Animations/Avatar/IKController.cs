@@ -18,8 +18,11 @@ public class IKController : MonoBehaviour {
 
     public int level;
 
+    private Transform modelPivot;
+
     void Start() {
         animator = gameObject.GetComponent<Animator>();
+        modelPivot = transform.parent;
     }
 
     //a callback for calculating IK
@@ -28,9 +31,10 @@ public class IKController : MonoBehaviour {
             //if the IK is active, set the position and rotation directly to the goal.
             if (ikActive) {
                 // Set the look target position, if one has been assigned
+                
                 if (lookObj != null && head) {
                     animator.SetLookAtWeight(1);
-                    animator.SetLookAtPosition(lookObj.position);
+                    animator.SetLookAtPosition(modelPivot.position + (modelPivot.up * 0.7f) + (lookObj.forward));
                 }
                 
 
