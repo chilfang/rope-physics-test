@@ -38,6 +38,8 @@ public class PlayerController : NetworkBehaviour {
 
     public GameObject grappleShootObject;
 
+    private bool lockRope = false;
+
 
     // Start is called before the first frame update
     void Start() {
@@ -125,7 +127,7 @@ public class PlayerController : NetworkBehaviour {
                 Physics.Raycast(new Ray(grappleShootObject.transform.position, rope[^1].transform.position - grappleShootObject.transform.position), out var hit);
 
 
-                if (hit.collider.gameObject != null && hit.collider.gameObject.transform.root.gameObject != avatar) { //if something is hit
+                if (hit.collider.gameObject != null && hit.collider.gameObject.transform.root.gameObject != avatar.gameObject) { //if something is hit
                     if (rope.Count > 1 && hit.collider.gameObject == rope[^1]) { //test if that thing was an anchor node
                         Physics.Raycast(new Ray(grappleShootObject.transform.position, rope[^2].transform.position - grappleShootObject.transform.position), out hit); 
                         if (hit.collider.gameObject == rope[^2]) { //if the 2 previous nodes are hit delete the last node
@@ -375,7 +377,7 @@ public class PlayerController : NetworkBehaviour {
         lineRenderer.enabled = false;
 
         Destroy(rope[0].transform.parent.gameObject);
-        Destroy(transform.parent.gameObject.GetComponent<ConfigurableJoint>());
+        DestroyImmediate(transform.parent.gameObject.GetComponent<ConfigurableJoint>());
 
         rope.Clear();
         avatar.GetComponent<AvatarScript>().ropeGlobalPositions.Clear();
@@ -422,16 +424,20 @@ public class PlayerController : NetworkBehaviour {
             if (itemEquiper.itemsEquiped.Contains("GrappleShooter")) {
                 //grappleShootObject = itemEquiper.grappleShooter.transform.GetChild(0).GetChild(0).gameObject;
 
-                //if (lineRenderer.enabled) { ClearRope(); }
+
                 Vector3 aim = Cursor.lockState == CursorLockMode.Locked ? new Vector3(Screen.width / 2, Screen.height / 2) : Input.mousePosition;
-                if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.gameObject != transform.parent.gameObject) {
+                if (Physics.Raycast(transform.parent.GetComponentInChildren<Camera>().ScreenPointToRay(aim), out anchorInfo) && anchorInfo.collider.transform.root.gameObject != avatar.gameObject) {
                     if (Physics.Raycast(new Ray(grappleShootObject.transform.position, anchorInfo.point - grappleShootObject.transform.position), out anchorInfo)) {
+
+                        if (lineRenderer.enabled) { ClearRope(); }
                         CreateRope();
                     }
                 }
             }
         } else if (context.canceled && lineRenderer.enabled) {
-            ClearRope();
+            if (!lockRope) {
+                ClearRope();
+            }
         }
     }
 
@@ -440,5 +446,10 @@ public class PlayerController : NetworkBehaviour {
     }
     public void Two(InputAction.CallbackContext context) {
         GrappleSetting = 2;
+    }
+    public void Lock(InputAction.CallbackContext context) {
+        if (context.started) {
+            lockRope = !lockRope;
+        }
     }
 }

@@ -32,6 +32,7 @@ public class AvatarScript : NetworkBehaviour {
         ikController = GetComponent<IKController>();
         itemEquiper = GetComponent<ItemEquiper>();
         Application.onBeforeRender += UpdateLineRenderer;
+        upAirDirection = Vector3.up;
     }
 
     public override void OnNetworkSpawn() {
@@ -66,7 +67,21 @@ public class AvatarScript : NetworkBehaviour {
             if (lineRenderer.enabled) {
                 upAirDirection = ropeGlobalPositions[0] - modelPivot.transform.position;
             }
+            
+            if (direction.magnitude == 0) {
+                direction = transform.forward;
+
+                if (direction.magnitude == 0) {
+                    direction = transform.root.forward;
+
+                    if (direction.magnitude == 0) {
+                        direction = Vector3.forward;
+                    }
+                }
+            }
+            
             modelPivot.transform.rotation = Quaternion.LookRotation(direction, upAirDirection); //, ropeGlobalPositions[0] - model.transform.position
+                
             
         } else if (modelPivot.transform.rotation != transform.rotation) {
             modelPivot.transform.rotation = transform.rotation;

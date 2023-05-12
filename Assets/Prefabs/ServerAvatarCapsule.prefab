@@ -150,7 +150,7 @@ GameObject:
   - component: {fileID: 2437411965611219144}
   - component: {fileID: 1788743175234337393}
   m_Layer: 0
-  m_Name: ServerAvatar
+  m_Name: ServerAvatarCapsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

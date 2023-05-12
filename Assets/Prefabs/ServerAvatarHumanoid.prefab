@@ -168,7 +168,7 @@ GameObject:
   - component: {fileID: 1494633293034812926}
   - component: {fileID: 6554410392732544400}
   m_Layer: 0
-  m_Name: ServerAvatar2
+  m_Name: ServerAvatarHumanoid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -774,6 +774,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 93cdca48-866f-4102-8634-cd2bd5bb6636
     m_ActionName: PlayerControl/2[/Keyboard/2]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 101042987811395819}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: Lock
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 760b4834-c272-4c79-a241-bd2f94de2b63
+    m_ActionName: PlayerControl/Lock[/Keyboard/l]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: PlayerControl
@@ -3302,6 +3318,7 @@ GameObject:
   - component: {fileID: 3847819491868276578}
   - component: {fileID: 7147885111535343726}
   - component: {fileID: 2513495959338675194}
+  - component: {fileID: 4781378883056506140}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -3365,6 +3382,20 @@ MonoBehaviour:
   rightHand: 1
   feet: 1
   level: 0
+--- !u!114 &4781378883056506140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7605410867064777638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TransitionStateInfoList: []
+  m_Animator: {fileID: 7147885111535343726}
 --- !u!1 &7821518270166664637
 GameObject:
   m_ObjectHideFlags: 0

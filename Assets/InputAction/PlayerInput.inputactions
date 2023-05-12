@@ -121,6 +121,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Lock",
+                    "type": "Button",
+                    "id": "760b4834-c272-4c79-a241-bd2f94de2b63",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -264,6 +273,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f55fd41b-a13a-41cd-91fb-8bb1b7d629b2",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Lock",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
