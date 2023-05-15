@@ -85,6 +85,7 @@ public class AvatarScript : NetworkBehaviour {
             
         } else if (modelPivot.transform.rotation != transform.rotation) {
             modelPivot.transform.rotation = transform.rotation;
+            upAirDirection = Vector3.up;
         } else {
             upAirDirection = Vector3.up;
         }
@@ -109,6 +110,10 @@ public class AvatarScript : NetworkBehaviour {
 
     public void OnCollisionEnter(Collision collision) {
         var normalY = collision.GetContact(0).normal.y;
+
+        if (OwnerClientId == 1) {
+            Debug.Log("test");
+        }
 
         if (normalY > 0.45) {
             TouchingGround();

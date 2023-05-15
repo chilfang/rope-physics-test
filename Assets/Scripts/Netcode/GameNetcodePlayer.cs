@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameNetcodePlayer : NetworkBehaviour {
     public override void OnNetworkSpawn() {
@@ -9,7 +10,9 @@ public class GameNetcodePlayer : NetworkBehaviour {
             transform.Find("CameraPivot").gameObject.SetActive(true);
             Move();
         } else {
-            transform.Find("Controller").gameObject.SetActive(false);
+            transform.Find("Controller").GetComponent<CameraController>().enabled = false;
+            transform.Find("Controller").GetComponent<GUIController>().enabled = false;
+            transform.Find("Controller").GetComponent<PlayerInput>().enabled = false;
 
         }
     }
